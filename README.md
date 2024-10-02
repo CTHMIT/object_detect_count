@@ -5,7 +5,7 @@ This project uses YOLOv8 to create an object detection service in Python.
 ## Setup
 
 - Python 3.10+
-- Conda environment with required libraries: `ultralytics`, `opencv-python-headless`, and `torch`
+- Conda environment with required libraries: `ultralytics`, `opencv-python-headless`, and `argparse`
 
 ## Usage
 
