@@ -3,7 +3,6 @@ import argparse
 import os
 import cv2  
 
-
 class Object:
     def __init__(self, bbox: list[int], category: str):
         self.bbox = bbox
@@ -37,7 +36,7 @@ class ObjectDetectionService:
 
         return detected_objects
 
-def find_images_in_current_directory(directory: str = None) -> list[str]:
+def find_images_in_current_directory(directory: str | None = None) -> list[str]:
     
     directory = directory if directory is not None else os.getcwd()
     return [os.path.join(directory, f) for f in os.listdir(directory) 
@@ -71,6 +70,6 @@ if __name__ == "__main__":
         image_paths = [args.image_path]
 
     if not image_paths:
-        print("No images found in the specified directory or no image path provided.")
+        print("No images found or no image path provided.")
     else:
         main(image_paths)

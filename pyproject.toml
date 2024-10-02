@@ -1,0 +1,23 @@
+[project]
+name = "object_detect_count"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "cthsu", email = "chuntsehsu@gmail.com"},
+]
+dependencies = []
+requires-python = "==3.10.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "ultralytics>=8.3.3",
+    "argparse>=1.4.0",
+    "opencv-python-headless>=4.10.0.84",
+    "mypy>=1.11.2",
+]
