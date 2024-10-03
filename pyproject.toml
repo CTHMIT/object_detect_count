@@ -21,4 +21,6 @@ dev = [
     "opencv-python-headless>=4.10.0.84",
     "mypy>=1.11.2",
     "torch>=2.4.1",
+    "pycocotools>=2.0.8",
+    "matplotlib>=3.9.2",
 ]
