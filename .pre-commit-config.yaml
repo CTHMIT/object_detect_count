@@ -46,6 +46,22 @@ repos:
       - id: ruff-format
         description: "Apply Ruff's auto-formatting rules to Python code."
 
+  # Pydantic validation
+  - repo: local
+    hooks:
+      - id: pydantic-validator
+        name: Pydantic Validator for COCO Dataset
+        entry: bash -c 'python od_server.py --image /home/cthsu/object_detect_count/coco/val2017/000000023781.jpg --annotations /home/cthsu/object_detect_count/coco/annotations/instances_val2017.json'
+        language: python
+        types: [python]
+        files: ^od_server\.py$
+        stages: [commit]
+        additional_dependencies:
+          - pydantic
+          - pycocotools
+          - ultralytics
+
+
 # Default stages where the hooks should run.
 # 'commit': Run hooks on commit
 # 'push': Run hooks on push.

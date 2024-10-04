@@ -4,15 +4,44 @@ import os
 import cv2
 from pycocotools.coco import COCO
 import matplotlib.pyplot as plt
+from pydantic import BaseModel, validator
+from typing import List, Optional
+import sys
+
+print(f"Arguments passed to od_server.py: {sys.argv}")
 
 
-class Object:
-    def __init__(self, bbox: list[int], category: str):
-        self.bbox = bbox
-        self.category = category
+class ObjectModel(BaseModel):
+    bbox: List[int]
+    category: str
 
-    def __repr__(self):
-        return f"Object(bbox={self.bbox}, category='{self.category}')"
+    @validator("bbox")
+    def validate_bbox(cls, bbox):
+        if len(bbox) != 4:
+            raise ValueError("Bounding box must contain exactly 4 integer values")
+        if any(not isinstance(coord, int) for coord in bbox):
+            raise ValueError("All bounding box coordinates must be integers")
+        return bbox
+
+
+class DetectionResultModel(BaseModel):
+    image_path: str
+    detected_objects: List[ObjectModel]
+    true_objects: List[ObjectModel]
+    missed_items: List[ObjectModel]
+
+
+class ArgumentsModel(BaseModel):
+    directory: Optional[str]
+    image: Optional[str]
+    annotations: str
+    mode: bool = False
+
+    @validator("annotations")
+    def validate_annotations(cls, path):
+        if not os.path.isfile(path):
+            raise ValueError(f"Annotations file {path} does not exist.")
+        return path
 
 
 class ObjectDetectionService:
@@ -37,7 +66,7 @@ class ObjectDetectionService:
         return len(categories)
 
     @staticmethod
-    def fun2(image_path: str) -> list[Object]:
+    def fun2(image_path: str) -> list[ObjectModel]:
         """
         Input: image path
         when detected object, model will feeback te bounding box
@@ -51,7 +80,7 @@ class ObjectDetectionService:
         for box in results[0].boxes:
             bbox = [int(coord) for coord in box.xyxy[0].tolist()]
             category = ObjectDetectionService.model.names[int(box.cls)]
-            detected_objects.append(Object(bbox, category))
+            detected_objects.append(ObjectModel(bbox=bbox, category=category))
 
         return detected_objects
 
@@ -75,9 +104,9 @@ def load_coco_annotations(annotation_file: str):
 
 def show_image_with_annotations(
     image_path: str,
-    detected_objects: list[Object],
-    true_objects: list[Object],
-    missed_items: list[Object],
+    detected_objects: list[ObjectModel],
+    true_objects: list[ObjectModel],
+    missed_items: list[ObjectModel],
 ):
     image = cv2.imread(image_path)
     if len(missed_items) > 0:
@@ -132,7 +161,7 @@ def show_image_with_annotations(
 
 
 def compare_detections_and_ground_truth(
-    detected_objects: list[Object], true_objects: list[Object]
+    detected_objects: list[ObjectModel], true_objects: list[ObjectModel]
 ):
     """
     Find out how many items without detected by object detection model
@@ -148,7 +177,7 @@ def compare_detections_and_ground_truth(
     return missed_items
 
 
-def main(image_paths: list[str], coco: COCO):
+def main(image_paths: list[str], coco: COCO, mode: bool = False):
     for image_path in image_paths:
         print(f"\nProcessing image: {image_path}")
 
@@ -159,16 +188,14 @@ def main(image_paths: list[str], coco: COCO):
         for obj in detected_objects:
             print(obj)
 
-        image_id = int(
-            os.path.splitext(os.path.basename(image_path))[0].split("_")[-1]
-        )  # Assuming ID is in the filename
+        image_id = int(os.path.splitext(os.path.basename(image_path))[0].split("_")[-1])
 
         annotation_ids = coco.getAnnIds(imgIds=image_id)
         annotations = coco.loadAnns(annotation_ids)
         true_objects = [
-            Object(
-                [int(coord) for coord in ann["bbox"]],
-                coco.loadCats(ann["category_id"])[0]["name"],
+            ObjectModel(
+                bbox=[int(coord) for coord in ann["bbox"]],
+                category=coco.loadCats(ann["category_id"])[0]["name"],
             )
             for ann in annotations
         ]
@@ -177,9 +204,11 @@ def main(image_paths: list[str], coco: COCO):
             detected_objects, true_objects
         )
         print(f"Number of missed items: {len(missed_items)}")
-        show_image_with_annotations(
-            image_path, detected_objects, true_objects, missed_items
-        )
+
+        if mode:
+            show_image_with_annotations(
+                image_path, detected_objects, true_objects, missed_items
+            )
 
 
 if __name__ == "__main__":
@@ -196,10 +225,24 @@ if __name__ == "__main__":
         required=True,
         help="Path to the COCO annotations JSON file",
     )
+    parser.add_argument(
+        "--mode",
+        type=bool,
+        default=False,
+        help="Display or not display the image detection track",
+    )
 
     args = parser.parse_args()
+    print("args info :", args)
 
-    directory = args.directory if args.directory else None
+    arguments = ArgumentsModel(
+        directory=args.directory,
+        image=args.image,
+        annotations=args.annotations,
+        mode=args.mode,
+    )
+
+    directory = arguments.directory
 
     image_paths = find_images_in_current_directory(directory)
 
@@ -210,4 +253,5 @@ if __name__ == "__main__":
         print("No images found or no image path provided.")
     else:
         coco = load_coco_annotations(args.annotations)
-        main(image_paths, coco)
+
+        main(image_paths, coco, arguments.mode)
