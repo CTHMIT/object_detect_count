@@ -1,0 +1,52 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        description: "Remove trailing whitespace from files."
+      - id: end-of-file-fixer
+        exclude: migrations/
+        description: "Ensure all files end with a newline."
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        description: "Validate YAML files, allowing multiple YAML documents."
+      - id: check-json
+        description: "Ensure JSON files are well-formatted."
+      - id: fix-encoding-pragma
+        args: ["--remove"]
+        description: "Remove unnecessary encoding pragmas in Python files."
+      - id: forbid-new-submodules
+        description: "Prevent adding new submodules to the repository."
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        description: "Ensure all files use UNIX-style 'lf' line endings."
+      - id: check-added-large-files
+        args: ["--maxkb=700"]
+        description: "Prevent large files (over 700KB) from being committed."
+      - id: no-commit-to-branch
+        args: [--branch, staging]
+        description: "Prevent direct commits to the 'staging' branch."
+
+  # Mypy repository for type checking in Python.
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: [--no-strict-optional, --ignore-missing-imports]
+        additional_dependencies: [types-aiofiles]
+        description: "Perform type checking using mypy with custom dependencies."
+
+  # Ruff repository for linting and formatting Python code.
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.13
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        description: "Run Ruff linter and apply automatic fixes for Python code."
+      - id: ruff-format
+        description: "Apply Ruff's auto-formatting rules to Python code."
+
+# Default stages where the hooks should run.
+# 'commit': Run hooks on commit
+# 'push': Run hooks on push.
+default_stages: [commit, push]
