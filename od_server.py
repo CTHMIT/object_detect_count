@@ -4,18 +4,17 @@ import os
 import cv2
 from pycocotools.coco import COCO
 import matplotlib.pyplot as plt
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import List, Optional
-import sys
 
-print(f"Arguments passed to od_server.py: {sys.argv}")
+# print(f"Arguments passed to od_server.py: {sys.argv}")
 
 
 class ObjectModel(BaseModel):
     bbox: List[int]
     category: str
 
-    @validator("bbox")
+    @field_validator("bbox")
     def validate_bbox(cls, bbox):
         if len(bbox) != 4:
             raise ValueError("Bounding box must contain exactly 4 integer values")
@@ -37,7 +36,7 @@ class ArgumentsModel(BaseModel):
     annotations: str
     mode: bool = False
 
-    @validator("annotations")
+    @field_validator("annotations")
     def validate_annotations(cls, path):
         if not os.path.isfile(path):
             raise ValueError(f"Annotations file {path} does not exist.")
@@ -233,7 +232,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    print("args info :", args)
+    # print("args info :", args)
 
     arguments = ArgumentsModel(
         directory=args.directory,
